@@ -1,3 +1,3 @@
-# kispython
+# Программирование на языке Python
 
-[Intro]()
+[Лекция №1](https://github.com/true-grue/kispython/blob/main/lect1.ipynb)
