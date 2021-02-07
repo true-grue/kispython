@@ -1,0 +1,84 @@
+﻿<svg class="railroad-diagram" width="276.5" height="62" viewBox="0 0 276.5 62" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g transform="translate(.5 .5)">
+<g>
+<path d="M20 21v20m10 -20v20m-10 -10h20"></path>
+</g>
+<path d="M40 31h10"></path>
+<g>
+<path d="M50 31h0"></path>
+<path d="M226.5 31h0"></path>
+<g class="non-terminal ">
+<path d="M50 31h0"></path>
+<path d="M104 31h0"></path>
+<rect x="50" y="20" width="54" height="22"></rect>
+<text x="77" y="35">else</text>
+</g>
+<path d="M104 31h10"></path>
+<path d="M114 31h10"></path>
+<g class="terminal ">
+<path d="M124 31h0"></path>
+<path d="M152.5 31h0"></path>
+<rect x="124" y="20" width="28.5" height="22" rx="10" ry="10"></rect>
+<text x="138.25" y="35">:</text>
+</g>
+<path d="M152.5 31h10"></path>
+<path d="M162.5 31h10"></path>
+<g class="non-terminal ">
+<path d="M172.5 31h0"></path>
+<path d="M226.5 31h0"></path>
+<rect x="172.5" y="20" width="54" height="22"></rect>
+<text x="199.5" y="35">блок</text>
+</g>
+</g>
+<path d="M226.5 31h10"></path>
+<path d="M 236.5 31 h 20 m -10 -10 v 20 m 10 -20 v 20"></path>
+</g>
+<style>
+    svg {
+        background-color: hsl(30,20%,95%);
+    }
+    path {
+        stroke-width: 3;
+        stroke: black;
+        fill: rgba(0,0,0,0);
+    }
+    text {
+        font: bold 14px monospace;
+        text-anchor: middle;
+        white-space: pre;
+    }
+    text.diagram-text {
+        font-size: 12px;
+    }
+    text.diagram-arrow {
+        font-size: 16px;
+    }
+    text.label {
+        text-anchor: start;
+    }
+    text.comment {
+        font: italic 12px monospace;
+    }
+    g.non-terminal text {
+        /&#42;font-style: italic;&#42;/
+    }
+    rect {
+        stroke-width: 3;
+        stroke: black;
+        fill: hsl(120,100%,90%);
+    }
+    rect.group-box {
+        stroke: gray;
+        stroke-dasharray: 10 5;
+        fill: none;
+    }
+    path.diagram-text {
+        stroke-width: 3;
+        stroke: black;
+        fill: white;
+        cursor: help;
+    }
+    g.diagram-text:hover path.diagram-text {
+        fill: #eee;
+    }</style>
+</svg>
