@@ -8,3 +8,6 @@
 
 Практическое занятие №1:
 [co](https://colab.research.google.com/github/true-grue/kispython/blob/main/pract1.ipynb)
+
+Практическое занятие №2:
+[co](https://colab.research.google.com/github/true-grue/kispython/blob/main/pract2.ipynb)
