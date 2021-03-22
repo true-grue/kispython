@@ -23,3 +23,7 @@
 Практическое занятие №3:
 [gh](https://github.com/true-grue/kispython/blob/main/pract3.ipynb)
 [co](https://colab.research.google.com/github/true-grue/kispython/blob/main/pract3.ipynb)
+
+Практическое занятие №4:
+[gh](https://github.com/true-grue/kispython/blob/main/pract4.ipynb)
+[co](https://colab.research.google.com/github/true-grue/kispython/blob/main/pract4.ipynb)
