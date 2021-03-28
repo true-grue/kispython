@@ -12,6 +12,10 @@
 [gh](https://github.com/true-grue/kispython/blob/main/lect3.ipynb)
 [co](https://colab.research.google.com/github/true-grue/kispython/blob/main/lect3.ipynb)
 
+Лекция №4:
+[gh](https://github.com/true-grue/kispython/blob/main/lect4.ipynb)
+[co](https://colab.research.google.com/github/true-grue/kispython/blob/main/lect4.ipynb)
+
 Практическое занятие №1:
 [gh](https://github.com/true-grue/kispython/blob/main/pract1.ipynb)
 [co](https://colab.research.google.com/github/true-grue/kispython/blob/main/pract1.ipynb)
