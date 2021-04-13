@@ -1,33 +1,55 @@
 # Программирование на языке Python
 
-Лекция №1:
+### 1.  Введение
+
+Лекция:
 [gh](https://github.com/true-grue/kispython/blob/main/lect1.ipynb)
 [co](https://colab.research.google.com/github/true-grue/kispython/blob/main/lect1.ipynb)
 
-Лекция №2:
-[gh](https://github.com/true-grue/kispython/blob/main/lect2.ipynb)
-[co](https://colab.research.google.com/github/true-grue/kispython/blob/main/lect2.ipynb)
-
-Лекция №3:
-[gh](https://github.com/true-grue/kispython/blob/main/lect3.ipynb)
-[co](https://colab.research.google.com/github/true-grue/kispython/blob/main/lect3.ipynb)
-
-Лекция №4:
-[gh](https://github.com/true-grue/kispython/blob/main/lect4.ipynb)
-[co](https://colab.research.google.com/github/true-grue/kispython/blob/main/lect4.ipynb)
-
-Практическое занятие №1:
+Практическое занятие:
 [gh](https://github.com/true-grue/kispython/blob/main/pract1.ipynb)
 [co](https://colab.research.google.com/github/true-grue/kispython/blob/main/pract1.ipynb)
 
-Практическое занятие №2:
+---
+
+### 2.  Простые скрипты
+
+Лекция:
+[gh](https://github.com/true-grue/kispython/blob/main/lect2.ipynb)
+[co](https://colab.research.google.com/github/true-grue/kispython/blob/main/lect2.ipynb)
+
+Практическое занятие:
 [gh](https://github.com/true-grue/kispython/blob/main/pract2.ipynb)
 [co](https://colab.research.google.com/github/true-grue/kispython/blob/main/pract2.ipynb)
 
-Практическое занятие №3:
+---
+
+### 3. Организация программ
+
+Лекция:
+[gh](https://github.com/true-grue/kispython/blob/main/lect3.ipynb)
+[co](https://colab.research.google.com/github/true-grue/kispython/blob/main/lect3.ipynb)
+
+Практическое занятие:
 [gh](https://github.com/true-grue/kispython/blob/main/pract3.ipynb)
 [co](https://colab.research.google.com/github/true-grue/kispython/blob/main/pract3.ipynb)
 
-Практическое занятие №4:
+---
+
+### 4. Объектно-ориентированное программирование
+
+Лекция:
+[gh](https://github.com/true-grue/kispython/blob/main/lect4.ipynb)
+[co](https://colab.research.google.com/github/true-grue/kispython/blob/main/lect4.ipynb)
+
+Практическое занятие:
 [gh](https://github.com/true-grue/kispython/blob/main/pract4.ipynb)
 [co](https://colab.research.google.com/github/true-grue/kispython/blob/main/pract4.ipynb)
+
+---
+
+### 5. Тестирование и отладка
+
+Лекция:
+[gh](https://github.com/true-grue/kispython/blob/main/lect5.ipynb)
+[co](https://colab.research.google.com/github/true-grue/kispython/blob/main/lect5.ipynb)
