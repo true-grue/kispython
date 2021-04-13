@@ -10,8 +10,6 @@
 [gh](https://github.com/true-grue/kispython/blob/main/pract1.ipynb)
 [co](https://colab.research.google.com/github/true-grue/kispython/blob/main/pract1.ipynb)
 
----
-
 ### 2.  Простые скрипты
 
 Лекция:
@@ -21,8 +19,6 @@
 Практическое занятие:
 [gh](https://github.com/true-grue/kispython/blob/main/pract2.ipynb)
 [co](https://colab.research.google.com/github/true-grue/kispython/blob/main/pract2.ipynb)
-
----
 
 ### 3. Организация программ
 
@@ -34,8 +30,6 @@
 [gh](https://github.com/true-grue/kispython/blob/main/pract3.ipynb)
 [co](https://colab.research.google.com/github/true-grue/kispython/blob/main/pract3.ipynb)
 
----
-
 ### 4. Объектно-ориентированное программирование
 
 Лекция:
@@ -46,9 +40,7 @@
 [gh](https://github.com/true-grue/kispython/blob/main/pract4.ipynb)
 [co](https://colab.research.google.com/github/true-grue/kispython/blob/main/pract4.ipynb)
 
----
-
-### 5. Тестирование и отладка
+### 5. Автоматизация тестирования
 
 Лекция:
 [gh](https://github.com/true-grue/kispython/blob/main/lect5.ipynb)
