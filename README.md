@@ -45,3 +45,7 @@
 Лекция:
 [gh](https://github.com/true-grue/kispython/blob/main/lect5.ipynb)
 [co](https://colab.research.google.com/github/true-grue/kispython/blob/main/lect5.ipynb)
+
+Практическое занятие:
+[gh](https://github.com/true-grue/kispython/blob/main/pract5.ipynb)
+[co](https://colab.research.google.com/github/true-grue/kispython/blob/main/pract5.ipynb)
