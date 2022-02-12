@@ -168,7 +168,7 @@ naive_mul(10, 15)
       File "<ipython-input-6-0e60a6c4c0d1>", line 3
         for i in range(0, y - 1)
         ^
-    IndentationError: unexpected 
+    IndentationError: unexpected indent
 ```
 
 Добавьте к `naive_mul` автоматическое тестирование для проверки обоих
