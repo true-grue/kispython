@@ -12,7 +12,8 @@
 1. Простые скрипты
 
     * Лекция:
-
+    [gh](https://github.com/true-grue/kispython/blob/main/lect2.ipynb)
+    [co](https://colab.research.google.com/github/true-grue/kispython/blob/main/lect2.ipynb)
     * Практическое занятие:
     [gh](https://github.com/true-grue/kispython/blob/main/pract2.ipynb)
     [co](https://colab.research.google.com/github/true-grue/kispython/blob/main/pract2.ipynb)
