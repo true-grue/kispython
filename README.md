@@ -21,3 +21,5 @@
     * Лекция:
     [co](https://colab.research.google.com/github/true-grue/kispython/blob/main/lect3.ipynb)
     * Практическое занятие:
+    [gh](https://github.com/true-grue/kispython/blob/main/pract3.ipynb)
+    [co](https://colab.research.google.com/github/true-grue/kispython/blob/main/pract3.ipynb)
