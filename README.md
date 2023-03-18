@@ -23,3 +23,10 @@
     * Практическое занятие:
     [gh](https://github.com/true-grue/kispython/blob/main/pract3.ipynb)
     [co](https://colab.research.google.com/github/true-grue/kispython/blob/main/pract3.ipynb)
+
+1. Объектно-ориентированное программирование
+
+    * Лекция:
+    [gh](https://github.com/true-grue/kispython/blob/main/lect4.ipynb)
+    [co](https://colab.research.google.com/github/true-grue/kispython/blob/main/lect4.ipynb)
+    * Практическое занятие:
