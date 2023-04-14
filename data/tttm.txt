@@ -1,0 +1,691 @@
+The Teeny Tiny Mansion (TTTM) is a mockup text adventure game that is formally
+proven to have no "dead ends". I.e. all player actions will result in a state
+in which the game is still winnable.
+
+I started thinking about formal verification for adventures games after I
+half-jokingly wrote the following tweet, referring to a bug that has been
+discussed on the Thimbleweed Park Development Blog:
+
+    https://twitter.com/oe1cxw/status/850861311709851650
+
+TTTM is a proof-of-concept showing that formally verified adventure games are
+possible, and how they could be built. (Please note that TTTM does not aim to
+be a very interesting game. So keep your expectations low.)
+
+I'll first briefly describe why I think formal verification of adventure games
+is useful, then describe the TTTM game itself, and then describe how the formal
+proof I have implemented works. Finally I'll close with some additional remarks
+on how this techniques could be employed in real-world games.
+
+My aim is not only to explain how to to formally verify an adventure game,
+but also to sneak in some basic knowledge about formal verification and maybe
+get you interested in formal methods in general.
+
+This example uses cbmc as C model checker. The Makefile builds the game and
+runs all the formal tests necessary to prove that there are no dead ends in
+the game.
+
+
+Why Formal Verification for Adventure Games?
+--------------------------------------------
+
+(Good) Adventure Games are not linear. The player has a choice in what order to
+solve puzzles and has certain freedoms in exploring the world. However, to much
+freedom can increase the complexity of a game significantly, and make it
+impossible for game designers and beta testers to make sure the game cannot get
+into a state that the designers did not anticipate. The most extreme example of
+this is a situation where the player gets stuck and cannot win the game anymore
+(without loading a previously saved state of the game).
+
+Not only can formal verification help finding those problems early in the
+design (before beta testing). I believe it would also enable game designers to
+create more open games, that would be impossible to audit thoroughly by staring
+at a story graph and by employing human beta testers.
+
+This project (TTTM) demonstrates a method that can be used to prove that an
+adventure game does not have a reachable state in which the game cannot be
+completed.
+
+
+The Teeny Tiny Mansion
+----------------------
+
+TTTM has 2 playable characters (Alice and Bob) and 4 rooms (Red Room, Blue Room,
+West Room, and East Room). There are also 3 doors:
+
+  +----------------------------+           +----------------------------+
+  |                            |           |                            |
+  |                            |           |                            |
+  |                            |           |                            |
+  |                            |           |                            |
+  |                            |           |                            |
+  |           Red              |           |             Blue           |
+  |           Room             |           |             Room           |
+  |                            |           |                            |
+  |                            |           |                            |
+  |                            |           |                            |
+  |                            |           |                            |
+  +--------           ---------+           +---------           --------+
+          |           |                             |           |
+          |  Red Door |                             | Blue Door |
+          |           |                             |           |
+  +--------           ---------+           +---------           --------+
+  |                            |           |                            |
+  |                            |           |                            |
+  |                            |           |                            |
+  |                            |           |                            |
+  |                            |-----------|                            |
+  |           West                Green                  East           |
+  |           Room                 Door                  Room           |
+  |                            |-----------|                            |
+  |                            |           |                            |
+  |                            |           |                            |
+  |                            |           |                            |
+  |                            |           |                            |
+  +----------------------------+           +----------------------------+
+
+Alice's goal is to go to the Red Room and Bob's goal is to go to the Blue Room.
+
+There are 3 keys in the game: Red Key, Blue Key, and Green Key.
+
+A character can only walk through a door if she/he has the matching key
+in her/his inventory. (The doors automatically close behind them when
+they walk through.)
+
+Characters can pass keys to each other when they are in the same room.
+
+Initially Alice, Bob, and the three keys are randomly placed in the West Room
+and East Room.
+
+When a character reaches her/his destination room then the character will
+refuse to leave again.
+
+There are two possible scenarios for dead ends:
+
+1. The random initial position might be unsolvable. For example, both
+characters could be placed in the West Room and all keys in the East Room.
+
+2. A character can walk into her or his destination room without providing
+the necessary assistance to the other character first.
+
+The game avoids those scenarios (unless compiled with -D BAD_GAME_DESIGN)
+by adding the following features:
+
+1. Only solvable initial configurations are created.
+
+2. A character refuses to walk into her/his destination room when the other
+character still needs help from this character first to ultimately reach
+his/her destination room.
+
+Formal methods are used to confirm that the game with this two additional
+features indeed cannot reach an unwinnable state.
+
+
+My simple game engine
+---------------------
+
+For simplicity TTTM (and its formal proofs) are written in plain C99.
+
+The game itself has two major data types:
+
+    typedef ... game_state_t;
+    typedef ... game_action_t;
+
+The function make_initstate() creates a pseudo-random init state for the game:
+
+    game_state_t state;
+    uint32_t initseed = ...;
+    make_initstate(&state, initseed);
+
+The function query_actions() creates a list of possible actions that the user
+can perform in a given state:
+
+    game_action_t action_list[MAX_ACTIONS];
+    int num_actions = query_actions(&state, action_list);
+
+And the function apply_action() applies a given action to a given game state:
+
+    int user_input = ...;
+    apply_action(&state, &action_list[user_input]);
+
+The game simply creates an initial state and then runs a loop that calls
+query_actions(), asks the user which action they want to perform, and then
+calls apply_action() for the selected action, until the game is won.
+
+Note that nothing in this interface is in any way specific to the TTTM game
+itself. Therefore the method for proving the absence of dead ends that I
+describe below is generic.
+
+
+Formally proving the game has no dead ends
+------------------------------------------
+
+For the formal proof we need to provide a few additional functions. Note that
+the proofs simultaneously prove the correctness of the actual game and those
+additional functions. So even though there is additional work required to write
+those additional functions, we don't create an additional surface for new bugs
+as all bugs in those additional functions would be caught by the formal checks
+we perform using them. (Depending on how formal_action_valid() is implemented
+there might be an exception to that rule for this function. See also Closing
+Thoughts below.)
+
+First we need to define a set of valid states. This is done by creating a
+function that evaluates set membership for this set:
+
+    bool formal_state_valid(const game_state_t *state);
+
+I.e. this function returns true for all states that are members of the set
+of valid states, and false for all other states.
+
+The set of valid states must have the following properties:
+
+- It is an over-approximation of all reachable states. I.e. all states that
+  are reachable from an initial state must be members of the set.
+
+- All valid states must be "alive", i.e. it must be possible to finish the
+  game from a valid state.
+
+- The set membership must be an inductive invariant. That means a state
+  reachable from a valid state via a valid action must also be a valid state.
+
+We also need a function that tells us if a given action is valid in a given
+state:
+
+    bool formal_action_valid(const game_state_t *state, const game_action_t *action);
+
+In our case this function is trivial: It simply calls query_actions() and checks
+if the given action is a member of the list created by query_actions().
+
+Then we need a rather complex function that takes a game state and produces
+an action that brings us closer to finishing the game:
+
+    void formal_actor(const game_state_t *state, game_action_t *action);
+
+For long games we need an additional function that scores the current game
+state. This function is needed if the longest path from any valid state to the
+end of the game is too long for the naive implementation of the formal proof
+that I describe in the next section:
+
+    typedef ... critic_score_t;
+    critic_score_t formal_critic(const game_state_t *state);
+
+There must also be a transitive less-than operator for those scores that allows
+us to measure game progress:
+
+    bool lt_scores(critic_score_t score1, critic_score_t score2);
+
+In TTTM critic_score_t is simply int and lt_scores() is implemented as
+score1 < score2.
+
+There are a few proofs in tttm.c that together prove that there are no dead
+ends in the game. The Makefile runs them all (with cbmc). The proof functions
+all have names that start with "prove_". For example, to prove with cbmc that
+all initial states are valid states:
+
+    cbmc -D FORMAL --function prove_init_validness tttm.c
+
+The following sections describe the individual proofs in more detail.
+
+
+Proving properties of the set of valid states
+---------------------------------------------
+
+First let's check if all initial states are contained in the set of valid
+states. The following function implements this proof:
+
+    void prove_init_validness(uint32_t seed)
+    {
+        game_state_t state;
+        make_initstate(&state, seed);
+        assert(formal_state_valid(&state));
+    }
+
+The formal verification tool effectively runs this function with all possible
+seed values and checks if the assert() is violated in any of the cases. But it
+uses a more much efficient method to accomplish this than running the function
+2^32 (approximately 4 billion) times.
+
+Next we need to prove that formal_state_valid() is an inductive invariant. This
+is also relatively simple:
+
+    void prove_completeness(game_state_t state, game_action_t action)
+    {
+        if (!formal_state_valid(&state))
+            return;
+
+        if (!formal_action_valid(&state, &action))
+            return;
+
+        apply_action(&state, &action);
+        assert(formal_state_valid(&state));
+    }
+
+The "if (..) return" statements effectively implement assumptions: We assume that
+the given state is valid and that the given action is valid for that state. In all
+other cases we simply return early before asserting anything.
+
+For valid state-action pairs we then apply the action to the state and assert
+that the new state is also a valid state. If the set of valid states is not an
+inductive invariant, then this assert will fail for at least one valid
+state-action-pair, and the model checker will find this case for us.
+
+Finally we need to check that formal_actor() only returns valid actions. This
+allows us to assume that formal_actor() will always return a valid action in the
+more complex proofs below, drastically decreasing the complexity of those proofs.
+
+    void prove_actor_validness(game_state_t state)
+    {
+        if (!formal_state_valid(&state))
+            return;
+
+        game_action_t action;
+        formal_actor(&state, &action);
+        assert(formal_action_valid(&state, &action));
+    }
+
+Now we have everything in place to actually prove the absence of dead ends in
+our game. I describe two methods for doing that in the next two sections.
+
+
+Proving bounded liveness for the actor function
+-----------------------------------------------
+
+It is possible to finish TTTM from any valid state in 18 actions or fewer. Thus
+the MAX_FINISH_DEPTH define in tttm.c is set to 18. We have already proven that
+all reachable states are contained within our set of valid states. If we can now
+prove that formal_actor() can finish the game within 18 actions from any valid
+state, then we have proven that the game has no dead ends.
+
+    void prove_bounded_liveness(game_state_t state)
+    {
+        if (!formal_state_valid(&state))
+            return;
+
+        for (int i = 0; i < MAX_FINISH_DEPTH; i++)
+        {
+            game_action_t action;
+            formal_actor(&state, &action);
+            // assert(formal_action_valid(&state, &action));
+
+            if (action.op == OP_FINISH)
+                return;
+
+            apply_action(&state, &action);
+        }
+
+        assert(0);
+    }
+
+(The action satisfying "action.op == OP_FINISH" is only valid when the game
+is completed.)
+
+Notice the commented-out assert()? We don't need this assert because
+prove_actor_validness() has already proven that formal_actor() will always
+return a valid action for the given state. Enabling this assert would
+drastically increase the complexity of the prove without adding anything
+useful to it.
+
+If proving prove_bounded_liveness() succeeds then we are done. However, if it
+does not succeed then this can mean any of the following:
+
+- Maybe the game does contain a dead end. Then we have to fix it.
+
+- Maybe the game is OK but the formal_actor() function does not know how to
+  solve it from a certain state.
+
+- Maybe the game is OK and formal_actor() is OK, but MAX_FINISH_DEPTH is
+  an insufficient number of actions to solve from any valid state.
+
+When an error is reported by cbmc then it will output the value of the
+state argument as part of its report. One can set the CEX_STATE define
+to this value, recompile, and run ./tttm to play interactively from that
+initial state, or run ./tttm_autorun to let formal_actor() solve from
+that initial state. This can be used to narrow down the issue and come
+up with a suitable fix.
+
+For large values of MAX_FINISH_DEPTH and complex games this approach will not
+yield a proof that can be computed with current C model checkers. In the
+following section I describe a slightly more complex method that will also
+work with long and complex games.
+
+
+Proving unbounded liveness for the actor function
+-------------------------------------------------
+
+Long games would require large values for MAX_FINISH_DEPTH, exponentially
+exploding the search space for the model checker for proving that the game
+can be completed from any valid state.
+
+However, we can replace the notion of completing the game within a certain
+bound with the notion of making progress within a certain bound.
+
+As long as we can guarantee that formal_actor() can make progress within a
+certain bound, and assuming that the game has only a finite number of states,
+we can guarantee that formal_actor() will ultimately solve the game.
+
+In order to measure progress we need a formal_critic() function that takes a
+(valid) state and returns a metric the measures how far we have come in the
+game. In TTTM this metric is simply an integer, but it could be any data
+structure as long as a transitive less-than operator to compare two scores is
+provided. Transitivity simply means that A < B and B < C implies A < C. Without
+transitivity we could go in circles and still make constant "progress". Let's
+first prove transitivity for our score compare function:
+
+    void prove_transitiveness(game_state_t state1, game_state_t state2, game_state_t state3)
+    {
+        if (!formal_state_valid(&state1))
+            return;
+
+        if (!formal_state_valid(&state2))
+            return;
+
+        if (!formal_state_valid(&state3))
+            return;
+
+        critic_score_t score1 = formal_critic(&state1);
+        critic_score_t score2 = formal_critic(&state2);
+        critic_score_t score3 = formal_critic(&state3);
+
+        if (lt_scores(score1, score2) && lt_scores(score2, score3))
+            assert(lt_scores(score1, score3));
+    }
+
+Now lets prove that formal_actor() will always make progress within at most
+4 actions (the value of MAX_PROGRESS_DEPTH in tttm.c):
+
+    void prove_unbounded_liveness(game_state_t state)
+    {
+        if (!formal_state_valid(&state))
+            return;
+
+        critic_score_t old_score = formal_critic(&state);
+
+        for (int i = 0; i < MAX_PROGRESS_DEPTH; i++)
+        {
+            game_action_t action;
+            formal_actor(&state, &action);
+            // assert(formal_action_valid(&state, &action));
+
+            if (action.op == OP_FINISH)
+                return;
+
+            apply_action(&state, &action);
+        }
+
+        critic_score_t new_score = formal_critic(&state);
+
+        assert(lt_scores(old_score, new_score));
+    }
+
+On my machine and with cbmc, TTTM can be proven to be free of dead ends within
+15 seconds using the bounded method implemented in prove_bounded_liveness(),
+and within 2 seconds using prove_unbounded_liveness(). The more complex
+unbounded method would not have been absolutely necessary to prove TTTM, but
+for longer games that cannot be solved in a small number of actions, the
+bounded approach becomes infeasible and only unbounded checks are of any
+practical interest.
+
+
+Additional Remarks on Actors and Critics
+----------------------------------------
+
+There is no need for formal_actor() and formal_critic() to be independent
+functions. In most cases it would probably be much easier to create one single
+function that returns the next action and also a score for the current state.
+
+In TTTM the actor and critic functions are ad-hoc implementations for this very
+simple game. For more complex games a more structured approach would be needed.
+I will outline such an approach in the following paragraphs.
+
+Lets assume an adventure game with multiple playable characters. Each puzzle
+requires a certain set of characters to be in the right locations each while
+holding the right items in their inventory. Then they need to execute a
+sequence of actions that solves the puzzle. Completion of a puzzle unlocks
+more puzzles, i.e. a puzzle can be in one of the following three states: locked,
+unlocked, or completed.
+
+The actor for such a game would consist of two main parts: 1. some code that
+looks at the game state and decides which puzzle to solve right now, and 2. some
+code that determines the next action to solve the current puzzle.
+
+The first part would simply determine which puzzles are in the unlocked state
+and then chooses one using a pre-determined list of priorities. Note that the
+unlocked state of a puzzle does not need to be explicitly expressed in the game
+state. It could also be simply implied by other things, such as the inventory
+items the characters have acquired so far.
+
+A function that simply counts the number of solved puzzles can be used to
+generate the MSB bits of the critic score. The remaining LSB bits of the score
+can then be used to keep track of progress within the current puzzle.
+
+Notice that some "puzzles" in this sense can be rather trivial, like for
+example just going to a place and picking up an object.
+
+So the combined actor-critic could look something like this:
+
+    critic_score_t formal_actor_critic(const game_state_t *state, game_action_t *action)
+    {
+        puzzle_enum_t current_puzzle = determine_current_puzzle(state);
+        critic_score_t num_solved_puzzles = count_solved_puzzles(state);
+        critic_score_t current_task_score = 0;
+
+        // default for when no action is found
+        action = INVALID_ACTION;
+
+        if (current_puzzle == PUZZLE_A) {
+            ...
+        }
+
+        if (current_puzzle == PUZZLE_B) {
+            ...
+        }
+        
+        return (num_solved_puzzles << TASK_SCORE_BITS) | (current_task_score);
+    }
+
+For the kind of puzzle described above, solving the puzzle can be broken down
+in four phases:
+
+1. Bringing the character to a meeting point where they can exchange objects.
+
+2. Exchanging objects.
+
+3. Bringing the characters to the places they need to be to solve the puzzle.
+
+4. Executing the sequence of puzzle-specific actions required to solve the puzzle.
+
+The first three phases can be summarized as setting up to solve the puzzle and
+only differ in the set of characters, objects and locations involved. It should
+be fairly simply to generalize this part and re-use the same code for all the
+puzzles.
+
+The code in formal_actor_critic() for solving a puzzle could look something
+like this (the prefix "pa_" is used for functions specific to solving puzzle A):
+
+    if (current_puzzle == PUZZLE_A)
+    {
+        if (!pa_everyone_has_right_object(state))
+        {
+            // We are in phase 1 or 2
+
+            if (!pa_everyone_is_at_meeting_place(state))
+            {
+                // We are in phase 1
+
+                current_task_score = 1 << PHASE_SCORE_BITS;
+                current_task_score -= pa_sum_of_distance_to_meeting_place(state);
+                action = pa_move_to_meeting_action(state);
+            }
+            else
+            {
+                // We are in phase 2
+
+                current_task_score = 2 << PHASE_SCORE_BITS;
+                current_task_score -= pa_sum_of_object_in_wrong_inventory(state);
+                action = pa_exchange_inventory_items_action(state);
+            }
+        }
+        else
+        {
+            // We are in phase 3 or 4
+
+            if (!pa_everyone_is_in_place(state))
+            {
+                // We are in phase 3
+
+                current_task_score = 3 << PHASE_SCORE_BITS;
+                current_task_score -= pa_sum_of_distance_to_puzzle_places(state);
+                action = pa_move_to_puzzle_action(state);
+            }
+            else
+            {
+                // We are in phase 4
+
+                current_task_score = 4 << PHASE_SCORE_BITS;
+                current_task_score += pa_puzzle_steps_performed(state);
+                action = pa_puzzle_step_action(state);
+            }
+        }
+    }
+
+The main challenge here is of course that formal_actor_critic() has no
+additional state that it can use to do things like remembering which puzzle it
+is trying to solve. It has to infer the next action by only looking at the game
+state.
+
+I am, however, confident that the general scheme that I described above can be
+used to write actor-critic functions for even complex adventure games.
+
+
+Discussion
+----------
+
+There is an argument to be had for a solution that directly proves if a given
+state is solvable, without the need for an explicit actor and critic function
+(or even without the need for formal_state_valid). Techniques that would enable
+this certainly exist in the formal verification research, but I don't know if
+any of it is implemented in existing open source C/C++ model checkers.
+
+However, it would certainly drastically increase the overall complexity of the
+proof in a way that renders the use of such methods impractical for large and
+complex games. Furthermore I would argue that a proof using explicit functions
+provided by the game design team is more valuable:
+
+Consider a situation where there is a bug that would prevent a player from
+finishing the game using normal play, but there is also an obscure work-around
+that most users would never find. An automatic prover would not be able to
+distinguish the obscure work-around from regular game play and thus would
+incorrectly claim that the game is bug-free. Having an explicit actor function
+makes sure that not only the game always stays winnable, it also makes sure
+that the game is always winnable the intended way.
+
+Here is a concrete (made up) example:
+
+Consider a situation where in order to unlock a new puzzle a cut scene must be
+activated. Say the cut scene plays in the kitchen. But for some reason the
+player decided that the kitchen is a good place to park the characters she is
+not using right now. The game meanwhile is waiting with playing the cut scene
+until the kitchen is vacated. The game designers might have thought that a
+certain puzzle would force the player to move all characters to a place that is
+not the kitchen. But maybe the player was able to do that puzzle before the
+cut scene became available. An automatic prover might simply design it's
+auto-generated actor so that it moves all characters out of the kitchen to
+activate the cut-scene. But a human programmer working on the actor code would
+quickly realize that the "move everyone out of the kitchen puzzle" is a boring
+puzzle, and that instead the prerequisites for the puzzle that was designed to
+force the player to leave the kitchen must be fixed. When this is done then the
+actor does not need to know anything about triggering that cut scene, because
+it is now guaranteed that the cut scene will play as a side effect of a real
+puzzle. Instead of adding anything to the actor, something like the following
+assertion would need to be added to formal_state_valid():
+
+    if (puzzle_42_is_solved(state) && !cut_scene_23_has_played(state))
+        return false;
+
+The roles of formal_actor() and formal_critic(), formal_state_valid(), and
+formal_action_valid() can be summarized as follows:
+
+formal_action_valid() is a description of what the game explicitly allows the
+user to do.
+
+formal_state_valid() is a description of the reachable state space (or an
+over-approximation thereof), as implied by formal_action_valid(). This function
+can become very large and complex, but that is okay.
+
+formal_actor() and formal_critic() represents what the player must learn about
+the world in order to win the game. If there is something really odd that the
+actor function must do (such as explicitly vacating the kitchen to trigger a cut
+scene), this means that at least in some cases there will be a burden on the
+player to do the same odd thing in order to make progress in the game.
+
+
+Closing Thoughts
+----------------
+
+In order to formally prove any real-world adventure games, one would likely
+need to build an engine with formal verification in mind. A clear separation of
+the high-level game logic (inventory, possible actions in a state, etc) and the
+presentation to the player is required, so that the high-level game logic can
+be compiled independently of the actual GUI and verified stand-alone.
+
+The GUI would need to create instances of game_action_t and use the same
+apply_action() action function as used in the formal proof to modify the
+game_state_t struct. (Otherwise we would verify and ship two different games.)
+
+The game must be designed in a way so that game_action_t is sufficiently coarse
+to ensure that only a relatively small number of actions is required to solve
+the game. Otherwise it would become impractical to formally verify the game.
+
+The biggest challenge probably is to make sure that formal_action_valid()
+correctly identifies exactly the set of actions that can be generated using the
+GUI. Either a set of additional auxiliary proofs is needed to ensure that this
+is the case, or the game must have a way of enumerating the possible actions
+and formal_action_valid() could just use that feature (this is what I did for
+proving TTTM).
+
+Proving that a game is free of dead ends is only one property of an adventure
+game that can be formally verified using this technique. Another application
+would be to prove that certain pairs of events in the game always happen in
+the right order, guaranteeing that the story always makes sense independent
+of the sequence of actions the player chooses.
+
+I hope you found this quick exploration of formal verification of adventure
+games interesting. If you want to experiment with formal methods yourself I'd
+recommend you download CBMC or ESBMC and give it a try in your own projects.
+(ESBMC is based on CBMC, so they are very similar.)
+
+    http://www.cprover.org/cbmc/
+    http://www.esbmc.org/
+
+I myself am working on tools for formal verification of digital hardware. You
+can find more information about those projects here:
+
+    http://www.clifford.at/papers/2017/smtbmc-sby/
+    http://symbiyosys.readthedocs.io/
+
+The blog post that inspired me to think about formal verification of adventure
+games is "Patch Notes" from April 4th from the Thimbleweed Park Development Blog:
+
+    https://blog.thimbleweedpark.com/patch_notes
+
+This README and the C code for TTTM can be found here:
+
+    http://svn.clifford.at/handicraft/2017/tttm/
+
+Happy Hacking.
+
+
+
+Appendix: References to prior art and similar projects
+------------------------------------------------------
+
+Formal Verification of Selected Game-Logic Specifications; Stefan Radomski and Tim Neubacher
+http://scxmlworkshop.de/eics2015/submissions/Formal%20Verification%20of%20Selected%20Game-Logic%20Specifications.pdf
+
+Model-checking for adventure videogames; Pablo Moreno-Ger, Rubén Fuentes-Fernández, José-Luis Sierra-Rodríguez, Baltasar Fernández-Manjón
+http://www.e-ucm.es/drafts/e-UCM_draft_106.pdf
+
+PuzzleGraph; Rune Skovbo Johansen
+https://runevision.itch.io/puzzlegraph
+
+Contact me at @oe1cxw if you have additional references to prior art that I should add here.
