@@ -40,3 +40,6 @@
 * Матричные операции:
 [gh](https://github.com/true-grue/kispython/blob/main/contrib/matrices.ipynb)
 [co](https://colab.research.google.com/github/true-grue/kispython/blob/main/contrib/matrices.ipynb)
+* Хаотические отображения:
+[gh](https://github.com/true-grue/kispython/blob/main/contrib/chaos.ipynb)
+[co](https://colab.research.google.com/github/true-grue/kispython/blob/main/contrib/chaos.ipynb)
