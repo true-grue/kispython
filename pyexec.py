@@ -42,7 +42,7 @@ def exec_stmt(frame, tree):
         case ast.Assign([name], expr):
             store_name(frame, name.id, exec_expr(frame, expr))
         case ast.Expr(expr):
-            return exec_expr(frame, expr)
+            exec_expr(frame, expr)
         case _:
             raise SyntaxError
 
