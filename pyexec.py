@@ -8,6 +8,7 @@ def PyObject(ty, val):
 Type = PyObject(None, 'type')
 Type['type'] = Type
 Int = PyObject(Type, 'int')
+Builtin = PyObject(Type, 'builtin_function_or_method')
 
 
 def load_name(frame, name):
@@ -31,7 +32,7 @@ def exec_expr(frame, tree):
         case ast.Constant(int(value)):
             return PyObject(Int, value)
         case ast.Call(ast.Name(name), [arg]):
-            func = load_name(frame, name)
+            func = load_name(frame, name)['value']
             return func(exec_expr(frame, arg))
         case _:
             raise SyntaxError
@@ -60,17 +61,17 @@ def exec_module(frame, tree):
             raise SyntaxError
 
 
-def builtin_print(obj):
+def print_func(obj):
     print(obj['value'])
 
 
-def builtin_type(obj):
+def type_func(obj):
     return obj['type']
 
 
 builtins = {
-    'print': builtin_print,
-    'type': builtin_type
+    'print': PyObject(Builtin, print_func),
+    'type': PyObject(Builtin, type_func)
 }
 
 globs = {}
@@ -84,7 +85,7 @@ Frame = {
 src = '''
 x = 42
 print(type(x))
-print(x)
+print(print)
 '''
 
 exec_module(Frame, ast.parse(src))
