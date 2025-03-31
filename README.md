@@ -28,6 +28,9 @@
 
     * Лекция:
     [co](https://colab.research.google.com/github/true-grue/kispython/blob/main/lect4.ipynb)
+    * Практическое занятие:
+    [gh](https://github.com/true-grue/kispython/blob/main/pract4.ipynb)
+    [co](https://colab.research.google.com/github/true-grue/kispython/blob/main/pract4.ipynb)
 
 ## Дополнительные задачи
 
